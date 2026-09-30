@@ -108,6 +108,110 @@ export default function RegisterPage() {
   const [countryOfBirth, setCountryOfBirth] = useState("");
   const [countryLivingIn, setCountryLivingIn] = useState("");
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const [redirectingToWhatsApp, setRedirectingToWhatsApp] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
+
+  const handleSubmitApplication = async () => {
+    if (!canContinue || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      // const application = {
+      //   jobType: selectedJobType,
+      //   jobRole,
+      //   country,
+      //   passportStatus,
+      //   feeAcknowledged,
+
+      //   firstName,
+      //   lastName,
+      //   phone,
+      //   whatsapp,
+      //   email,
+      //   countryOfBirth,
+      //   countryLivingIn,
+      // };
+
+      // const response = await fetch("/api/applications", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify(application),
+      // });
+
+      // const result = await response.json();
+
+      // if (!response.ok) {
+      //   throw new Error(
+      //     result?.message || "Unable to submit your application.",
+      //   );
+      // }
+
+      /*
+       * Database submission succeeded.
+       * Now redirect to WhatsApp.
+       */
+
+      const whatsappNumber = "254713839182"; // YOUR BUSINESS WHATSAPP NUMBER
+
+      const message = `
+Hello Steve Safari,
+
+I have completed my job application.
+
+
+Name: ${firstName} ${lastName}
+Job: ${jobRole}
+Job Type: ${selectedJob?.title || selectedJobType}
+Country: ${country}
+Passport Status: ${passportStatus}
+Phone: ${phone}
+WhatsApp: ${whatsapp}
+Email: ${email}
+Country of Birth: ${countryOfBirth}
+Country Living In: ${countryLivingIn || "Not specified"}
+
+I have read and acknowledged the service fee notice.
+
+Thank you.
+`.trim();
+
+      const whatsappUrl =
+        `https://wa.me/${whatsappNumber}?text=` + encodeURIComponent(message);
+
+      setRedirectingToWhatsApp(true);
+      setRedirectCountdown(3);
+
+      let countdown = 3;
+
+      const timer = setInterval(() => {
+        countdown -= 1;
+        setRedirectCountdown(countdown);
+
+        if (countdown <= 0) {
+          clearInterval(timer);
+          window.location.href = whatsappUrl;
+        }
+      }, 1000);
+    } catch (error) {
+      console.error(error);
+
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while submitting your application.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   /*
    * =========================================================
    * STEP NAVIGATION
@@ -156,35 +260,10 @@ export default function RegisterPage() {
 
     // STEP 6
     if (currentStep === 6) {
-      if (
-        !firstName.trim() ||
-        !lastName.trim() ||
-        !phone.trim() ||
-        !whatsapp.trim() ||
-        !email.trim() ||
-        !countryOfBirth
-      ) {
+      if (currentStep === 6) {
+        handleSubmitApplication();
         return;
       }
-
-      // Registration is complete here.
-      // Connect your API/database submission here.
-      console.log({
-        selectedJobType,
-        jobRole,
-        country,
-        passportStatus,
-        feeAcknowledged,
-        firstName,
-        lastName,
-        phone,
-        whatsapp,
-        email,
-        countryOfBirth,
-        countryLivingIn,
-      });
-
-      return;
     }
 
     // Remaining steps
@@ -1431,6 +1510,12 @@ export default function RegisterPage() {
               </div>
             </>
           )}
+
+          {submitError && (
+            <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+              {submitError}
+            </div>
+          )}
           {/* =================================================
               NAVIGATION
           ================================================= */}
@@ -1443,7 +1528,7 @@ export default function RegisterPage() {
               disabled={currentStep === 1}
               onClick={handleBack}
               className={`
-                flex h-[62px]
+                flex h-15.5
                 items-center justify-center
                 gap-2 rounded-lg
                 border-2
@@ -1465,34 +1550,95 @@ export default function RegisterPage() {
 
             <button
               type="button"
-              disabled={!canContinue}
+              disabled={!canContinue || isSubmitting}
               onClick={handleContinue}
               className={`
-                flex h-[62px]
-                items-center justify-center
-                gap-2 rounded-lg
-                text-base font-bold text-white
-                shadow-lg transition
+    flex h-[62px]
+    items-center justify-center
+    gap-2 rounded-lg
+    text-base font-bold text-white
+    shadow-lg transition
 
-                ${
-                  canContinue
-                    ? "bg-[#ca392d] shadow-red-900/10 hover:bg-[#b93026] active:scale-[.98]"
-                    : "cursor-not-allowed bg-[#cfc7c4]"
-                }
-              `}
+    ${
+      canContinue && !isSubmitting
+        ? "bg-[#ca392d] shadow-red-900/10 hover:bg-[#b93026] active:scale-[.98]"
+        : "cursor-not-allowed bg-[#cfc7c4]"
+    }
+  `}
             >
-              {currentStep === 6 ? "Submit Application" : "Continue"}
-
-              {currentStep === 6 ? (
-                <Check size={19} />
+              {isSubmitting ? (
+                <>
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  Submitting...
+                </>
               ) : (
-                <ArrowRight size={19} />
+                <>
+                  {currentStep === 6 ? "Submit Application" : "Continue"}
+
+                  {currentStep === 6 ? (
+                    <Check size={19} />
+                  ) : (
+                    <ArrowRight size={19} />
+                  )}
+                </>
               )}
             </button>
           </div>
         </div>
       </section>
 
+      {redirectingToWhatsApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-5 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
+            {/* WhatsApp icon */}
+
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#25D366]">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-10 w-10 fill-white"
+                aria-hidden="true"
+              >
+                <path d="M20.52 3.48A11.82 11.82 0 0 0 12.06 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.15 1.6 5.96L.06 24l6.28-1.65a11.88 11.88 0 0 0 5.72 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.16-3.45-8.43ZM12.07 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.73.98 1-3.64-.23-.37a9.83 9.83 0 0 1-1.51-5.28c0-5.46 4.44-9.9 9.91-9.9 2.65 0 5.14 1.03 7.01 2.91a9.85 9.85 0 0 1 2.9 7.02c0 5.46-4.44 9.9-9.91 9.9Zm5.43-7.42c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.77-1.64-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.5s1.07 2.9 1.22 3.1c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.5 1.69.64.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.08-.12-.27-.2-.57-.35Z" />
+              </svg>
+            </div>
+
+            {/* Success */}
+
+            <h2 className="mt-6 font-serif text-2xl font-semibold text-[#171717]">
+              Application Submitted!
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-[#666]">
+              Your application has been successfully saved.
+            </p>
+
+            {/* Redirect */}
+
+            <div className="mt-6 rounded-xl border border-[#d8f3df] bg-[#f2fff5] px-5 py-4">
+              <p className="text-sm font-bold text-[#218838]">
+                Redirecting you to WhatsApp...
+              </p>
+
+              <p className="mt-1 text-xs text-[#666]">Please wait a moment.</p>
+
+              <div className="mt-3 text-2xl font-bold text-[#25D366]">
+                {redirectCountdown}
+              </div>
+            </div>
+
+            {/* Loading indicator */}
+
+            <div className="mx-auto mt-6 h-1.5 w-full overflow-hidden rounded-full bg-[#e8eee9]">
+              <div
+                className="h-full rounded-full bg-[#25D366] transition-all duration-1000"
+                style={{
+                  width: `${((3 - redirectCountdown) / 3) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       {/* =====================================================
           FOOTER
       ===================================================== */}
@@ -1501,44 +1647,5 @@ export default function RegisterPage() {
         © {new Date().getFullYear()} Steve Safari. All rights reserved.
       </footer>
     </main>
-  );
-}
-
-/*
- * ===========================================================
- * PLACEHOLDER COMPONENT FOR STEPS 4-6
- * ===========================================================
- */
-
-type StepPlaceholderProps = {
-  icon: LucideIcon;
-  step: number | string;
-  title: string;
-  description: string;
-};
-
-function StepPlaceholder({
-  icon: Icon,
-  step,
-  title,
-  description,
-}: StepPlaceholderProps) {
-  return (
-    <div>
-      <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[3px] text-[#666]">
-        <Icon size={19} />
-        Step {step} of 6
-      </div>
-
-      <h1 className="mt-5 font-serif text-[34px] font-semibold leading-tight text-[#171717] sm:text-[42px]">
-        {title}
-      </h1>
-
-      <p className="mt-3 text-base leading-7 text-[#666]">{description}</p>
-
-      <div className="mt-10 rounded-lg border border-dashed border-[#ddd5d1] bg-[#faf8f7] p-8 text-center">
-        <p className="text-sm text-[#888]">This step will be added next.</p>
-      </div>
-    </div>
   );
 }
