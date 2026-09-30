@@ -16,6 +16,7 @@ import {
   Clock3,
   ClipboardList,
   ListChecks,
+  LucideIcon,
 } from "lucide-react";
 
 const steps = [
@@ -659,7 +660,19 @@ export default function RegisterPage() {
  * ===========================================================
  */
 
-function StepPlaceholder({ icon: Icon, step, title, description }) {
+type StepPlaceholderProps = {
+  icon: LucideIcon;
+  step: number | string;
+  title: string;
+  description: string;
+};
+
+function StepPlaceholder({
+  icon: Icon,
+  step,
+  title,
+  description,
+}: StepPlaceholderProps) {
   return (
     <div>
       <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[3px] text-[#666]">
