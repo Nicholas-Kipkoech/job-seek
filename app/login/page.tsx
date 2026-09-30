@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Eye,
@@ -11,9 +12,11 @@ import {
   LogIn,
   UserCircle2,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
@@ -27,6 +30,7 @@ export default function LoginPage() {
       password,
       rememberMe,
     });
+    router.push("/dashboard");
 
     // Connect your authentication here
   };
