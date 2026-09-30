@@ -18,6 +18,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import PaymentOptionCard from "./PaymentOptionCard";
+import { Suspense } from "react";
 
 type Tab = "home" | "progress" | "files" | "payment" | "refer" | "updates";
 
@@ -58,7 +59,25 @@ const tabs: {
   },
 ];
 
+function DashboardLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-pulse text-muted-foreground">
+        Loading dashboard...
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const searchParams = useSearchParams();
 
   const requestedTab = searchParams.get("tab");
