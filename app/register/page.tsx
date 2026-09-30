@@ -76,12 +76,37 @@ const jobTypes = [
   },
 ];
 
+const countries = [
+  "Kenya",
+  "Uganda",
+  "Tanzania",
+  "Rwanda",
+  "Burundi",
+  "South Sudan",
+  "DR Congo",
+];
+
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
 
   const [selectedJobType, setSelectedJobType] = useState("skilled");
 
   const [jobRole, setJobRole] = useState("");
+
+  const [country, setCountry] = useState("");
+  const [passportStatus, setPassportStatus] = useState("");
+  const [feeAcknowledged, setFeeAcknowledged] = useState(false);
+
+  /***
+   * USER DETAILS
+   */
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [email, setEmail] = useState("");
+  const [countryOfBirth, setCountryOfBirth] = useState("");
+  const [countryLivingIn, setCountryLivingIn] = useState("");
 
   /*
    * =========================================================
@@ -103,6 +128,62 @@ export default function RegisterPage() {
       if (!jobRole.trim()) return;
 
       setCurrentStep(3);
+      return;
+    }
+
+    // STEP 3
+    if (currentStep === 3) {
+      if (!country) return;
+
+      setCurrentStep(4);
+      return;
+    }
+
+    // STEP 4
+    if (currentStep === 4) {
+      if (!passportStatus) return;
+
+      setCurrentStep(5);
+      return;
+    }
+    // STEP 5
+    if (currentStep === 5) {
+      if (!feeAcknowledged) return;
+
+      setCurrentStep(6);
+      return;
+    }
+
+    // STEP 6
+    if (currentStep === 6) {
+      if (
+        !firstName.trim() ||
+        !lastName.trim() ||
+        !phone.trim() ||
+        !whatsapp.trim() ||
+        !email.trim() ||
+        !countryOfBirth
+      ) {
+        return;
+      }
+
+      // Registration is complete here.
+      // Connect your API/database submission here.
+      console.log({
+        selectedJobType,
+        jobRole,
+        country,
+        passportStatus,
+        feeAcknowledged,
+        firstName,
+        lastName,
+        phone,
+        whatsapp,
+        email,
+        countryOfBirth,
+        countryLivingIn,
+      });
+
       return;
     }
 
@@ -137,7 +218,20 @@ export default function RegisterPage() {
       ? !!selectedJobType
       : currentStep === 2
         ? !!jobRole.trim()
-        : true;
+        : currentStep === 3
+          ? !!country
+          : currentStep === 4
+            ? !!passportStatus
+            : currentStep === 5
+              ? feeAcknowledged
+              : currentStep === 6
+                ? !!firstName.trim() &&
+                  !!lastName.trim() &&
+                  !!phone.trim() &&
+                  !!whatsapp.trim() &&
+                  !!email.trim() &&
+                  !!countryOfBirth
+                : true;
 
   /*
    * =========================================================
@@ -543,12 +637,107 @@ export default function RegisterPage() {
           ================================================= */}
 
           {currentStep === 3 && (
-            <StepPlaceholder
-              icon={Globe2}
-              step="3"
-              title="Which country are you applying from?"
-              description="Tell us where you currently live."
-            />
+            <>
+              {/* Header */}
+
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[3px] text-[#666]">
+                  <Globe2 size={19} />
+                  Step 3 of 6
+                </div>
+
+                <h1 className="mt-5 font-serif text-[34px] font-semibold leading-tight text-[#171717] sm:text-[42px]">
+                  Select your country
+                </h1>
+
+                <p className="mt-3 text-base leading-7 text-[#666]">
+                  Select your country to view the applicable service fee for
+                  your job placement.
+                </p>
+              </div>
+
+              {/* Job type / Test badges */}
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                {/* Skilled Jobs */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <BriefcaseBusiness size={16} />
+
+                  {selectedJob?.title}
+                </div>
+
+                {/* Test */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <span className="text-[13px]">◆</span>
+                  Test
+                </div>
+              </div>
+
+              {/* Country */}
+
+              <div className="mt-8">
+                <label
+                  htmlFor="country"
+                  className="mb-2 block text-sm font-bold text-[#252525]"
+                >
+                  Country <span className="text-[#ca392d]">*</span>
+                </label>
+
+                <div className="relative">
+                  <select
+                    id="country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="
+                      h-[61px]
+                      w-full
+                      appearance-none
+                      rounded-lg
+                      border
+                      border-[#ded8d5]
+                      bg-white
+                      px-5
+                      pr-12
+                      text-[16px]
+                      text-[#222]
+                      outline-none
+                      transition
+
+                      focus:border-[#ca392d]
+                      focus:ring-4
+                      focus:ring-[#ca392d]/10
+                    "
+                  >
+                    <option value="">— Choose Your Country —</option>
+
+                    {countries.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Custom dropdown arrow */}
+
+                  <div className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#666]">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           {/* =================================================
@@ -556,12 +745,189 @@ export default function RegisterPage() {
           ================================================= */}
 
           {currentStep === 4 && (
-            <StepPlaceholder
-              icon={FileText}
-              step="4"
-              title="Do you have a valid passport?"
-              description="Tell us about your passport status."
-            />
+            <>
+              {/* Header */}
+
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[3px] text-[#666]">
+                  <FileText size={19} />
+                  Step 4 of 6
+                </div>
+
+                <h1 className="mt-5 font-serif text-[34px] font-semibold leading-tight text-[#171717] sm:text-[42px]">
+                  Travel Passport Status
+                </h1>
+
+                <p className="mt-3 text-base leading-7 text-[#555]">
+                  Do you have a travel passport?
+                </p>
+
+                <p className="mt-1 text-base leading-7 text-[#555]">
+                  Una passport ya kusafiria?
+                </p>
+              </div>
+
+              {/* Context badges */}
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                {/* Job type */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <BriefcaseBusiness size={16} />
+
+                  {selectedJob?.title}
+                </div>
+
+                {/* Test */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <span className="text-[13px]">◆</span>
+                  Test
+                </div>
+
+                {/* Country */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <Globe2 size={16} />
+
+                  {country || "Country"}
+                </div>
+              </div>
+
+              {/* Passport options */}
+
+              <div className="mt-8 space-y-4">
+                {/* YES */}
+
+                <button
+                  type="button"
+                  onClick={() => setPassportStatus("yes")}
+                  aria-pressed={passportStatus === "yes"}
+                  className={`
+          flex w-full items-center gap-5
+          rounded-lg border-2
+          px-7 py-6
+          text-left
+          transition-all duration-200
+
+          ${
+            passportStatus === "yes"
+              ? "border-[#ca392d] bg-[#fff7f5] shadow-[0_8px_25px_rgba(202,57,45,0.07)]"
+              : "border-[#e5dedd] bg-white hover:border-[#d88980] hover:bg-[#fffafa]"
+          }
+        `}
+                >
+                  {/* Radio */}
+
+                  <span
+                    className={`
+            flex h-7 w-7 shrink-0
+            items-center justify-center
+            rounded-full border-2
+            transition
+
+            ${passportStatus === "yes" ? "border-[#ca392d]" : "border-[#999]"}
+          `}
+                  >
+                    {passportStatus === "yes" && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-[#ca392d]" />
+                    )}
+                  </span>
+
+                  <span className="text-base font-bold text-[#222] sm:text-[17px]">
+                    Yes / Ndiyo, ninayo.
+                  </span>
+                </button>
+
+                {/* NO */}
+
+                <button
+                  type="button"
+                  onClick={() => setPassportStatus("no")}
+                  aria-pressed={passportStatus === "no"}
+                  className={`
+          flex w-full items-center gap-5
+          rounded-lg border-2
+          px-7 py-6
+          text-left
+          transition-all duration-200
+
+          ${
+            passportStatus === "no"
+              ? "border-[#ca392d] bg-[#fff7f5] shadow-[0_8px_25px_rgba(202,57,45,0.07)]"
+              : "border-[#e5dedd] bg-white hover:border-[#d88980] hover:bg-[#fffafa]"
+          }
+        `}
+                >
+                  {/* Radio */}
+
+                  <span
+                    className={`
+            flex h-7 w-7 shrink-0
+            items-center justify-center
+            rounded-full border-2
+            transition
+
+            ${passportStatus === "no" ? "border-[#ca392d]" : "border-[#999]"}
+          `}
+                  >
+                    {passportStatus === "no" && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-[#ca392d]" />
+                    )}
+                  </span>
+
+                  <span className="text-base font-bold text-[#222] sm:text-[17px]">
+                    No / Hapana, sina.
+                  </span>
+                </button>
+
+                {/* APPLIED */}
+
+                <button
+                  type="button"
+                  onClick={() => setPassportStatus("applied")}
+                  aria-pressed={passportStatus === "applied"}
+                  className={`
+          flex w-full items-center gap-5
+          rounded-lg border-2
+          px-7 py-6
+          text-left
+          transition-all duration-200
+
+          ${
+            passportStatus === "applied"
+              ? "border-[#ca392d] bg-[#fff7f5] shadow-[0_8px_25px_rgba(202,57,45,0.07)]"
+              : "border-[#e5dedd] bg-white hover:border-[#d88980] hover:bg-[#fffafa]"
+          }
+        `}
+                >
+                  {/* Radio */}
+
+                  <span
+                    className={`
+            flex h-7 w-7 shrink-0
+            items-center justify-center
+            rounded-full border-2
+            transition
+
+            ${
+              passportStatus === "applied"
+                ? "border-[#ca392d]"
+                : "border-[#999]"
+            }
+          `}
+                  >
+                    {passportStatus === "applied" && (
+                      <span className="h-3.5 w-3.5 rounded-full bg-[#ca392d]" />
+                    )}
+                  </span>
+
+                  <span className="text-base font-bold text-[#222] sm:text-[17px]">
+                    I have already applied / Nimeshaomba passport.
+                  </span>
+                </button>
+              </div>
+            </>
           )}
 
           {/* =================================================
@@ -569,12 +935,137 @@ export default function RegisterPage() {
           ================================================= */}
 
           {currentStep === 5 && (
-            <StepPlaceholder
-              icon={Clock3}
-              step="5"
-              title="When can you start?"
-              description="Tell us your availability to begin working."
-            />
+            <>
+              {/* Header */}
+
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[3px] text-[#666]">
+                  <Clock3 size={19} />
+                  Step 5 of 6
+                </div>
+
+                <h1 className="mt-5 font-serif text-[34px] font-semibold leading-tight text-[#171717] sm:text-[42px]">
+                  Important Service Fee Notice
+                </h1>
+
+                <p className="mt-3 text-base leading-7 text-[#555]">
+                  Please read and acknowledge our policy regarding service fees
+                  before proceeding.
+                </p>
+              </div>
+
+              {/* Context badges */}
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                {/* Job type */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <BriefcaseBusiness size={16} />
+
+                  {selectedJob?.title}
+                </div>
+
+                {/* Test */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <span className="text-[13px]">◆</span>
+                  Test
+                </div>
+
+                {/* Country */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <Globe2 size={16} />
+
+                  {country || "Country"}
+                </div>
+              </div>
+
+              {/* Service fee notice */}
+
+              <div className="mt-8 rounded-lg border-2 border-[#efb1aa] bg-[#fff4f2] px-7 py-7 sm:px-8">
+                {/* English notice */}
+
+                <div>
+                  <h2 className="text-lg font-bold text-[#b9362c]">NOTICE:</h2>
+
+                  <p className="mt-2 text-[15px] leading-7 text-[#272727] sm:text-base">
+                    The process only starts after the service fee is paid. You
+                    must be committed. The fee cannot be paid later. If you are
+                    not ready to pay the fee, please do not continue filling in
+                    your details.
+                  </p>
+                </div>
+
+                {/* Divider */}
+
+                <div className="my-6 border-t border-[#edc7c3]" />
+
+                {/* Swahili notice */}
+
+                <div>
+                  <h2 className="text-lg font-bold text-[#b9362c]">TAARIFA:</h2>
+
+                  <p className="mt-2 text-[15px] leading-7 text-[#272727] sm:text-base">
+                    Mchakato unaanza baada ya kulipa service fee. Lazima uwe
+                    tayari na umeamua. Malipo hayawezi kufanywa baadaye. Kama
+                    hauko tayari kulipa, tafadhali usiendelee kujaza taarifa
+                    zako.
+                  </p>
+                </div>
+              </div>
+
+              {/* Acknowledgement */}
+
+              <button
+                type="button"
+                onClick={() => setFeeAcknowledged(!feeAcknowledged)}
+                aria-pressed={feeAcknowledged}
+                className={`
+        mt-8 flex w-full items-start gap-5
+        rounded-lg border-2
+        px-7 py-6
+        text-left
+        transition-all duration-200
+
+        ${
+          feeAcknowledged
+            ? "border-[#ca392d] bg-[#fff7f5] shadow-[0_8px_25px_rgba(202,57,45,0.07)]"
+            : "border-[#e5dedd] bg-white hover:border-[#d88980] hover:bg-[#fffafa]"
+        }
+      `}
+              >
+                {/* Checkbox */}
+
+                <span
+                  className={`
+          mt-0.5 flex h-7 w-7 shrink-0
+          items-center justify-center
+          rounded-md border-2
+          transition
+
+          ${
+            feeAcknowledged
+              ? "border-[#ca392d] bg-[#ca392d]"
+              : "border-[#999] bg-white"
+          }
+        `}
+                >
+                  {feeAcknowledged && (
+                    <Check size={17} className="text-white" strokeWidth={3} />
+                  )}
+                </span>
+
+                {/* Text */}
+
+                <span className="text-base font-bold leading-7 text-[#222] sm:text-[17px]">
+                  I understand and agree to proceed
+                  <span className="block font-medium text-[#666]">
+                    (Naelewa na niko tayari kuendelea)
+                  </span>
+                </span>
+              </button>
+            </>
           )}
 
           {/* =================================================
@@ -582,19 +1073,369 @@ export default function RegisterPage() {
           ================================================= */}
 
           {currentStep === 6 && (
-            <StepPlaceholder
-              icon={ClipboardList}
-              step="6"
-              title="Tell us about yourself"
-              description="Enter your personal details to complete your application."
-            />
-          )}
+            <>
+              {/* Header */}
 
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[3px] text-[#666]">
+                  <UserRound size={19} />
+                  Step 6 of 6
+                </div>
+
+                <h1 className="mt-5 font-serif text-[34px] font-semibold leading-tight text-[#171717] sm:text-[42px]">
+                  Your personal details
+                </h1>
+
+                <p className="mt-3 text-base leading-7 text-[#555]">
+                  Enter your information exactly as it appears on your official
+                  documents.
+                </p>
+              </div>
+
+              {/* Context badges */}
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                {/* Job type */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <BriefcaseBusiness size={16} />
+
+                  {selectedJob?.title}
+                </div>
+
+                {/* Test */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <span className="text-[13px]">◆</span>
+                  Test
+                </div>
+
+                {/* Country */}
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#f0c4bf] bg-[#fff7f5] px-4 py-2 text-sm font-bold text-[#ca392d]">
+                  <Globe2 size={16} />
+
+                  {country || "Country"}
+                </div>
+              </div>
+
+              {/* =====================================================
+        PERSONAL DETAILS FORM
+    ===================================================== */}
+
+              <div className="mt-8 grid gap-x-5 gap-y-7 md:grid-cols-2">
+                {/* First Name */}
+
+                <div>
+                  <label
+                    htmlFor="firstName"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    First Name <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="e.g. John"
+                    autoComplete="given-name"
+                    className="
+            h-[61px]
+            w-full
+            rounded-lg
+            border border-[#ded8d5]
+            bg-white
+            px-5
+            text-[16px]
+            text-[#222]
+            outline-none
+            transition
+            placeholder:text-[#888]
+            focus:border-[#ca392d]
+            focus:ring-4
+            focus:ring-[#ca392d]/10
+          "
+                  />
+                </div>
+
+                {/* Last Name */}
+
+                <div>
+                  <label
+                    htmlFor="lastName"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    Last Name <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="e.g. Kamau"
+                    autoComplete="family-name"
+                    className="
+            h-[61px]
+            w-full
+            rounded-lg
+            border border-[#ded8d5]
+            bg-white
+            px-5
+            text-[16px]
+            text-[#222]
+            outline-none
+            transition
+            placeholder:text-[#888]
+            focus:border-[#ca392d]
+            focus:ring-4
+            focus:ring-[#ca392d]/10
+          "
+                  />
+                </div>
+
+                {/* Phone */}
+
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    Phone Number <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+254 700 000 000"
+                    autoComplete="tel"
+                    className="
+            h-[61px]
+            w-full
+            rounded-lg
+            border border-[#ded8d5]
+            bg-white
+            px-5
+            text-[16px]
+            text-[#222]
+            outline-none
+            transition
+            placeholder:text-[#888]
+            focus:border-[#ca392d]
+            focus:ring-4
+            focus:ring-[#ca392d]/10
+          "
+                  />
+                </div>
+
+                {/* WhatsApp */}
+
+                <div>
+                  <label
+                    htmlFor="whatsapp"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    WhatsApp Number <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <input
+                    id="whatsapp"
+                    type="tel"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="+254 700 000 000"
+                    autoComplete="tel"
+                    className="
+            h-[61px]
+            w-full
+            rounded-lg
+            border border-[#ded8d5]
+            bg-white
+            px-5
+            text-[16px]
+            text-[#222]
+            outline-none
+            transition
+            placeholder:text-[#888]
+            focus:border-[#ca392d]
+            focus:ring-4
+            focus:ring-[#ca392d]/10
+          "
+                  />
+                </div>
+
+                {/* Email */}
+
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    Email Address <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    className="
+            h-[61px]
+            w-full
+            rounded-lg
+            border border-[#ded8d5]
+            bg-white
+            px-5
+            text-[16px]
+            text-[#222]
+            outline-none
+            transition
+            placeholder:text-[#888]
+            focus:border-[#ca392d]
+            focus:ring-4
+            focus:ring-[#ca392d]/10
+          "
+                  />
+                </div>
+
+                {/* Empty space on desktop */}
+
+                <div className="hidden md:block" />
+
+                {/* Country of Birth */}
+
+                <div>
+                  <label
+                    htmlFor="countryOfBirth"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    Country of Birth <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      id="countryOfBirth"
+                      value={countryOfBirth}
+                      onChange={(e) => setCountryOfBirth(e.target.value)}
+                      className="
+              h-[61px]
+              w-full
+              appearance-none
+              rounded-lg
+              border border-[#ded8d5]
+              bg-white
+              px-5
+              pr-12
+              text-[16px]
+              text-[#222]
+              outline-none
+              transition
+              focus:border-[#ca392d]
+              focus:ring-4
+              focus:ring-[#ca392d]/10
+            "
+                    >
+                      <option value="">— Select country —</option>
+
+                      {countries.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#666]">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Country You Live In */}
+
+                <div>
+                  <label
+                    htmlFor="countryLivingIn"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    Country You Live In{" "}
+                    <span className="ml-1 font-normal text-[#999]">
+                      (optional)
+                    </span>
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      id="countryLivingIn"
+                      value={countryLivingIn}
+                      onChange={(e) => setCountryLivingIn(e.target.value)}
+                      className="
+              h-[61px]
+              w-full
+              appearance-none
+              rounded-lg
+              border border-[#ded8d5]
+              bg-white
+              px-5
+              pr-12
+              text-[16px]
+              text-[#222]
+              outline-none
+              transition
+              focus:border-[#ca392d]
+              focus:ring-4
+              focus:ring-[#ca392d]/10
+            "
+                    >
+                      <option value="">— Select country —</option>
+
+                      {countries.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[#666]">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
           {/* =================================================
               NAVIGATION
           ================================================= */}
 
-          <div className="mt-10 flex flex-col-reverse gap-4 border-t border-[#eee8e5] pt-7 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-10 grid grid-cols-1 gap-4 border-t border-[#eee8e5] pt-7 sm:grid-cols-[0.8fr_1.7fr]">
             {/* Back */}
 
             <button
@@ -602,18 +1443,21 @@ export default function RegisterPage() {
               disabled={currentStep === 1}
               onClick={handleBack}
               className={`
-                flex items-center justify-center
-                gap-2 rounded-lg px-5 py-3
-                text-sm font-bold transition
+                flex h-[62px]
+                items-center justify-center
+                gap-2 rounded-lg
+                border-2
+                text-base font-bold
+                transition
 
                 ${
                   currentStep === 1
-                    ? "cursor-not-allowed text-[#c7c2bf]"
-                    : "text-[#666] hover:bg-[#f7f3f1]"
+                    ? "cursor-not-allowed border-[#e8e2df] text-[#c7c2bf]"
+                    : "border-[#e5dedb] text-[#555] hover:bg-[#f7f3f1]"
                 }
               `}
             >
-              <ArrowLeft size={17} />
+              <ArrowLeft size={19} />
               Back
             </button>
 
@@ -624,9 +1468,10 @@ export default function RegisterPage() {
               disabled={!canContinue}
               onClick={handleContinue}
               className={`
-                flex items-center justify-center
-                gap-2 rounded-lg px-7 py-3.5
-                text-sm font-bold text-white
+                flex h-[62px]
+                items-center justify-center
+                gap-2 rounded-lg
+                text-base font-bold text-white
                 shadow-lg transition
 
                 ${
@@ -636,8 +1481,13 @@ export default function RegisterPage() {
                 }
               `}
             >
-              Continue
-              <ArrowRight size={18} />
+              {currentStep === 6 ? "Submit Application" : "Continue"}
+
+              {currentStep === 6 ? (
+                <Check size={19} />
+              ) : (
+                <ArrowRight size={19} />
+              )}
             </button>
           </div>
         </div>
@@ -656,7 +1506,7 @@ export default function RegisterPage() {
 
 /*
  * ===========================================================
- * PLACEHOLDER COMPONENT FOR STEPS 3-6
+ * PLACEHOLDER COMPONENT FOR STEPS 4-6
  * ===========================================================
  */
 
