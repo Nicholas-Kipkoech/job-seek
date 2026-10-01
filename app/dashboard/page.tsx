@@ -17,10 +17,12 @@ import {
   Wifi,
   Smartphone,
   LogOut,
+  Upload,
 } from "lucide-react";
 import PaymentOptionCard from "./PaymentOptionCard";
 import { Suspense, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import FilesContent from "./FileContent";
 
 type Tab = "home" | "progress" | "files" | "payment" | "refer" | "updates";
 
@@ -68,10 +70,9 @@ const tabs: {
     icon: Bell,
   },
 ];
-
 function DashboardLoading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F8F6EF]">
+    <div className="flex min-h-screen items-center justify-center bg-[#F8F6EF] px-5">
       <div className="text-sm font-semibold text-[#70848A]">
         Loading dashboard...
       </div>
@@ -82,12 +83,12 @@ function DashboardLoading() {
 function DashboardError({ message }: { message: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#F8F6EF] px-5">
-      <div className="w-full max-w-md rounded-2xl border border-[#DFE2DC] bg-white p-8 text-center shadow-sm">
+      <div className="w-full max-w-md rounded-2xl border border-[#DFE2DC] bg-white p-6 text-center shadow-sm sm:p-8">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
           <span className="text-xl font-bold">!</span>
         </div>
 
-        <h1 className="mt-5 font-serif text-3xl font-bold text-[#194B4F]">
+        <h1 className="mt-5 font-serif text-2xl font-bold text-[#194B4F] sm:text-3xl">
           Unable to load your dashboard
         </h1>
 
@@ -95,7 +96,7 @@ function DashboardError({ message }: { message: string }) {
 
         <Link
           href="/login"
-          className="mt-6 inline-flex min-h-[50px] items-center justify-center rounded-xl bg-[#194B4F] px-6 text-sm font-bold text-white transition hover:bg-[#153E41]"
+          className="mt-6 inline-flex min-h-[50px] w-full items-center justify-center rounded-xl bg-[#194B4F] px-6 text-sm font-bold text-white transition hover:bg-[#153E41] sm:w-auto"
         >
           Go to Login
         </Link>
@@ -122,6 +123,7 @@ function DashboardContent() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const requestedTab = searchParams.get("tab");
+  const [profileComplete, setProfileComplete] = useState(false);
 
   const activeTab: Tab = tabs.some((tab) => tab.id === requestedTab)
     ? (requestedTab as Tab)
@@ -137,9 +139,6 @@ function DashboardContent() {
 
         const supabase = createClient();
 
-        /*
-         * Get the currently logged-in user.
-         */
         const {
           data: { user },
           error: userError,
@@ -150,12 +149,6 @@ function DashboardContent() {
           return;
         }
 
-        /*
-         * Get this user's application.
-         *
-         * RLS should ensure the user can only access
-         * their own application.
-         */
         const { data: application, error: applicationError } = await supabase
           .from("applications")
           .select(
@@ -251,29 +244,28 @@ function DashboardContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F6EF] text-[#183F43]">
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
-      <header className="pt-7">
-        <div className="mx-auto w-[calc(100%-80px)] max-w-[1450px]">
+    <main className="min-h-screen overflow-x-hidden bg-[#F8F6EF] text-[#183F43]">
+      {/* HEADER */}
+      <header className="pt-4 sm:pt-7">
+        <div className="mx-auto w-[calc(100%-32px)] max-w-[1450px] sm:w-[calc(100%-48px)] lg:w-[calc(100%-80px)]">
           {/* Top header */}
-          <div className="flex min-h-[72px] items-center justify-between">
+          <div className="flex min-h-[64px] items-center justify-between gap-4 sm:min-h-[72px]">
             {/* Logo */}
             <Link
               href="/dashboard?tab=home"
-              className="font-serif text-[28px] font-bold tracking-[-1px]"
+              className="shrink-0 font-serif text-[24px] font-bold tracking-[-1px] sm:text-[28px]"
             >
               Steve <span className="text-[#148B8B]">Safari</span>
             </Link>
 
             {/* Applicant */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Notifications */}
               <button
                 type="button"
                 aria-label="Notifications"
                 className="
-                  flex h-[54px] w-[54px]
+                  flex h-10 w-10
                   items-center justify-center
                   rounded-full
                   border border-[#DBE3DF]
@@ -282,12 +274,14 @@ function DashboardContent() {
                   transition
                   hover:-translate-y-0.5
                   hover:shadow-[0_8px_20px_rgba(25,75,79,0.10)]
+                  sm:h-[54px] sm:w-[54px]
                 "
               >
-                <Bell size={23} strokeWidth={1.8} />
+                <Bell size={20} strokeWidth={1.8} />
               </button>
 
-              <div className="flex flex-col gap-1">
+              {/* Applicant info */}
+              <div className="hidden flex-col gap-1 sm:flex">
                 <span className="text-[16px] font-bold text-[#142E31]">
                   {applicant.name}
                 </span>
@@ -298,6 +292,13 @@ function DashboardContent() {
                 </span>
               </div>
 
+              {/* Mobile name */}
+              <div className="max-w-[120px] truncate sm:hidden">
+                <span className="block truncate text-sm font-bold text-[#142E31]">
+                  {applicant.name}
+                </span>
+              </div>
+
               {/* Logout */}
               <button
                 type="button"
@@ -305,8 +306,8 @@ function DashboardContent() {
                 disabled={isLoggingOut}
                 aria-label="Sign out"
                 className="
-                  ml-2
-                  flex h-[46px] w-[46px]
+                  flex h-10 w-10
+                  shrink-0
                   items-center justify-center
                   rounded-full
                   border border-[#DBE3DF]
@@ -317,18 +318,17 @@ function DashboardContent() {
                   hover:bg-red-50
                   hover:text-[#cf392d]
                   disabled:opacity-50
+                  sm:ml-2 sm:h-[46px] sm:w-[46px]
                 "
               >
-                <LogOut size={19} />
+                <LogOut size={18} />
               </button>
             </div>
           </div>
 
-          {/* =================================================
-              NAVIGATION
-          ================================================== */}
-          <nav className="mt-6 border-b border-[#DFE2DC] pb-[18px]">
-            <div className="flex items-center gap-2 overflow-x-auto">
+          {/* NAVIGATION */}
+          <nav className="mt-4 overflow-hidden border-b border-[#DFE2DC] pb-3 sm:mt-6 sm:pb-[18px]">
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide sm:gap-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -339,15 +339,19 @@ function DashboardContent() {
                     href={`/dashboard?tab=${tab.id}`}
                     className={`
                       inline-flex
-                      min-h-[52px]
+                      min-h-[44px]
                       shrink-0
                       items-center
-                      gap-[9px]
+                      gap-[7px]
                       rounded-[10px]
-                      px-[18px]
-                      text-[16px]
+                      px-3
+                      text-[14px]
                       font-semibold
                       transition
+                      sm:min-h-[52px]
+                      sm:gap-[9px]
+                      sm:px-[18px]
+                      sm:text-[16px]
                       ${
                         isActive
                           ? "bg-[#194B4F] text-white"
@@ -355,7 +359,7 @@ function DashboardContent() {
                       }
                     `}
                   >
-                    <Icon size={22} strokeWidth={1.8} />
+                    <Icon size={19} strokeWidth={1.8} />
                     {tab.label}
                   </Link>
                 );
@@ -365,26 +369,74 @@ function DashboardContent() {
         </div>
       </header>
 
-      {/* =====================================================
-          CONTENT
-      ====================================================== */}
-      <section className="mx-auto w-[calc(100%-80px)] max-w-[1450px] pb-28 pt-11">
+      {/* PROFILE COMPLETION BANNER */}
+      {!profileComplete && (
+        <section className="mx-auto mt-5 w-[calc(100%-32px)] max-w-[1450px] sm:mt-7 sm:w-[calc(100%-48px)] lg:w-[calc(100%-80px)]">
+          <div className="relative overflow-hidden rounded-2xl border border-[#CFE5DE] bg-[#EAF6F2] p-4 sm:rounded-[20px] sm:p-5 lg:p-6">
+            <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#148B8B] shadow-sm sm:h-12 sm:w-12">
+                  <Upload size={22} strokeWidth={2} />
+                </div>
+
+                <div>
+                  <h2 className="text-base font-extrabold text-[#194B4F] sm:text-lg">
+                    Complete your profile
+                  </h2>
+
+                  <p className="mt-1 max-w-[760px] text-sm leading-5 text-[#668087] sm:text-[15px] sm:leading-6">
+                    Upload your important documents, including your{" "}
+                    <strong>passport and national ID</strong>, to complete your
+                    application profile.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/dashboard?tab=files"
+                className="
+            inline-flex
+            min-h-[46px]
+            w-full
+            shrink-0
+            items-center
+            justify-center
+            gap-2
+            rounded-xl
+            bg-[#194B4F]
+            px-5
+            text-sm
+            font-extrabold
+            text-white
+            transition
+            hover:bg-[#153E41]
+            sm:w-auto
+          "
+              >
+                Upload documents
+                <ArrowRight size={18} strokeWidth={2.2} />
+              </Link>
+            </div>
+
+            {/* Decorative circle */}
+            <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-[#CBE8DE]/60 sm:h-40 sm:w-40" />
+          </div>
+        </section>
+      )}
+
+      {/* CONTENT */}
+      <section className="mx-auto w-[calc(100%-32px)] max-w-[1450px] pb-32 pt-8 sm:w-[calc(100%-48px)] sm:pb-28 sm:pt-11 lg:w-[calc(100%-80px)]">
         {activeTab === "home" && <HomeContent applicant={applicant} />}
-
         {activeTab === "progress" && <ProgressContent />}
-
-        {activeTab === "files" && <FilesContent />}
-
+        {activeTab === "files" && (
+          <FilesContent onProfileStatusChange={setProfileComplete} />
+        )}
         {activeTab === "payment" && <PaymentContent fee={applicant.fee} />}
-
         {activeTab === "refer" && <ReferContent applicantId={applicant.id} />}
-
         {activeTab === "updates" && <UpdatesContent />}
       </section>
 
-      {/* =====================================================
-          WHATSAPP BUTTON
-      ====================================================== */}
+      {/* WHATSAPP */}
       <WhatsAppButton applicantId={applicant.id} />
     </main>
   );
@@ -399,16 +451,7 @@ function HomeContent({ applicant }: { applicant: Applicant }) {
     <div>
       {/* Intro */}
       <div>
-        <p
-          className="
-            mb-[18px]
-            text-[14px]
-            font-extrabold
-            uppercase
-            tracking-[2px]
-            text-[#148B8B]
-          "
-        >
+        <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[2px] text-[#148B8B] sm:mb-[18px] sm:text-[14px]">
           Your Applicant Space
         </p>
 
@@ -416,24 +459,19 @@ function HomeContent({ applicant }: { applicant: Applicant }) {
           className="
             max-w-[900px]
             font-serif
-            text-[clamp(48px,5vw,68px)]
+            text-[40px]
             font-bold
-            leading-[1.02]
-            tracking-[-2px]
+            leading-[1.05]
+            tracking-[-1.5px]
             text-[#194B4F]
+            sm:text-[clamp(48px,5vw,68px)]
+            sm:tracking-[-2px]
           "
         >
           Welcome back, {applicant.name}.
         </h1>
 
-        <p
-          className="
-            mt-[18px]
-            text-[20px]
-            leading-[1.5]
-            text-[#668087]
-          "
-        >
+        <p className="mt-4 max-w-[700px] text-[17px] leading-[1.5] text-[#668087] sm:mt-[18px] sm:text-[20px]">
           A clear view of your Canada journey, all in one place.
         </p>
       </div>
@@ -442,75 +480,61 @@ function HomeContent({ applicant }: { applicant: Applicant }) {
       <div
         className="
           relative
-          mt-9
-          min-h-[326px]
+          mt-7
+          min-h-0
           overflow-hidden
-          rounded-[28px]
+          rounded-[22px]
           bg-[#205E61]
-          px-[42px]
-          py-[42px]
+          px-5
+          py-7
           text-white
+          sm:mt-9
+          sm:min-h-[326px]
+          sm:rounded-[28px]
+          sm:px-[42px]
+          sm:py-[42px]
         "
       >
-        <div className="relative z-10">
-          <p
-            className="
-              mb-2
-              text-[13px]
-              font-extrabold
-              uppercase
-              tracking-[2px]
-              text-white/85
-            "
-          >
+        <div className="relative z-10 max-w-[650px]">
+          <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[2px] text-white/85 sm:text-[13px]">
             Next Step
           </p>
 
-          <h2
-            className="
-              font-serif
-              text-[clamp(34px,4vw,45px)]
-              font-bold
-              leading-[1.1]
-              tracking-[-1px]
-            "
-          >
+          <h2 className="font-serif text-[30px] font-bold leading-[1.1] tracking-[-1px] sm:text-[clamp(34px,4vw,45px)]">
             Complete your service fee.
           </h2>
 
-          <p
-            className="
-              mt-3
-              text-[18px]
-              leading-[1.5]
-              text-white/90
-            "
-          >
+          <p className="mt-3 text-[16px] leading-[1.5] text-white/90 sm:text-[18px]">
             Payment unlocks the next phase of your application.
           </p>
 
-          <div className="mt-8 text-[31px] font-extrabold">
+          <div className="mt-6 text-[26px] font-extrabold sm:mt-8 sm:text-[31px]">
             KES {applicant.fee}
           </div>
 
           <Link
             href="/dashboard?tab=payment"
             className="
-              mt-[18px]
+              mt-4
               inline-flex
-              min-h-[59px]
+              min-h-[54px]
+              w-full
               items-center
               justify-center
               gap-2.5
               rounded-xl
               bg-white
               px-[22px]
-              text-[16px]
+              text-[15px]
               font-extrabold
               text-[#194B4F]
               transition
               hover:-translate-y-0.5
               hover:shadow-[0_12px_25px_rgba(0,0,0,0.13)]
+              sm:mt-[18px]
+              sm:min-h-[59px]
+              sm:w-auto
+              sm:text-[16px]
             "
           >
             Pay service fee
@@ -519,17 +543,7 @@ function HomeContent({ applicant }: { applicant: Applicant }) {
         </div>
 
         {/* Decorative shape */}
-        <div
-          className="
-            absolute
-            right-[50px]
-            top-[42px]
-            h-[155px]
-            w-[155px]
-            rotate-[15deg]
-            opacity-70
-          "
-        >
+        <div className="absolute -right-10 -top-5 hidden h-[155px] w-[155px] rotate-[15deg] opacity-70 sm:block">
           <div
             className="
               absolute
@@ -557,7 +571,7 @@ function ProgressContent() {
         description="Track each stage of your application."
       />
 
-      <div className="mt-9 space-y-4">
+      <div className="mt-7 space-y-3 sm:mt-9 sm:space-y-4">
         <ProgressItem
           title="Application submitted"
           description="Your application details have been received."
@@ -590,59 +604,13 @@ function ProgressContent() {
    FILES
 ========================================================= */
 
-function FilesContent() {
-  return (
-    <div>
-      <PageHeading
-        eyebrow="Your Documents"
-        title="Your files."
-        description="View and manage documents related to your application."
-      />
-
-      <div
-        className="
-          mt-9
-          rounded-[20px]
-          border
-          border-[#DFE2DC]
-          bg-white
-          p-8
-        "
-      >
-        <div className="flex items-center gap-4">
-          <div
-            className="
-              flex h-14 w-14
-              items-center justify-center
-              rounded-xl
-              bg-[#EFF7F5]
-              text-[#148B8B]
-            "
-          >
-            <FileText size={26} />
-          </div>
-
-          <div>
-            <h3 className="font-bold text-[#194B4F]">Application documents</h3>
-
-            <p className="mt-1 text-sm text-[#71858A]">
-              Your uploaded files will appear here.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* =========================================================
    PAYMENT
 ========================================================= */
 
 function PaymentContent({ fee }: { fee: string }) {
   return (
-    <div className="mx-auto max-w-[830px] space-y-5 px-5 py-8">
-      {/* SAFARICOM */}
+    <div className="mx-auto max-w-[830px] space-y-4 px-0 py-0 sm:space-y-5 sm:px-5 sm:py-8">
       <PaymentOptionCard
         name="Safaricom M-Pesa"
         description="Recommended"
@@ -701,7 +669,6 @@ function PaymentContent({ fee }: { fee: string }) {
         }}
       />
 
-      {/* AIRTEL */}
       <PaymentOptionCard
         name="Airtel Money Kenya"
         description="Interoperable"
@@ -791,32 +758,11 @@ function ReferContent({ applicantId }: { applicantId: string }) {
         description="Invite someone who may be interested in our services."
       />
 
-      <div
-        className="
-          mt-9
-          rounded-[24px]
-          border
-          border-[#DFE2DC]
-          bg-white
-          p-8
-        "
-      >
+      <div className="mt-7 rounded-[20px] border border-[#DFE2DC] bg-white p-5 sm:mt-9 sm:rounded-[24px] sm:p-8">
         <h3 className="text-xl font-bold text-[#194B4F]">Your referral link</h3>
 
-        <div
-          className="
-            mt-5
-            flex
-            min-h-[56px]
-            items-center
-            rounded-xl
-            bg-[#F5F5EF]
-            px-5
-            text-sm
-            text-[#71858A]
-          "
-        >
-          {referralLink}
+        <div className="mt-5 overflow-x-auto rounded-xl bg-[#F5F5EF] px-4 py-4 text-sm text-[#71858A]">
+          <span className="whitespace-nowrap">{referralLink}</span>
         </div>
 
         <button
@@ -824,6 +770,7 @@ function ReferContent({ applicantId }: { applicantId: string }) {
           onClick={handleCopy}
           className="
             mt-4
+            w-full
             rounded-xl
             bg-[#194B4F]
             px-6
@@ -832,6 +779,7 @@ function ReferContent({ applicantId }: { applicantId: string }) {
             text-white
             transition
             hover:bg-[#153E41]
+            sm:w-auto
           "
         >
           Copy referral link
@@ -854,16 +802,8 @@ function UpdatesContent() {
         description="Important information about your application."
       />
 
-      <div className="mt-9 space-y-4">
-        <div
-          className="
-            rounded-[20px]
-            border
-            border-[#DFE2DC]
-            bg-white
-            p-7
-          "
-        >
+      <div className="mt-7 space-y-4 sm:mt-9">
+        <div className="rounded-[20px] border border-[#DFE2DC] bg-white p-5 sm:p-7">
           <div className="flex gap-4">
             <div
               className="
@@ -881,7 +821,7 @@ function UpdatesContent() {
             <div>
               <h3 className="font-bold text-[#194B4F]">Application update</h3>
 
-              <p className="mt-2 text-[#71858A]">
+              <p className="mt-2 text-sm leading-6 text-[#71858A] sm:text-base">
                 Your application dashboard has been updated.
               </p>
 
@@ -917,23 +857,28 @@ function ProgressItem({
       className="
         flex
         items-center
-        gap-5
-        rounded-[20px]
+        gap-3
+        rounded-[18px]
         border
         border-[#DFE2DC]
         bg-white
-        p-6
+        p-4
+        sm:gap-5
+        sm:rounded-[20px]
+        sm:p-6
       "
     >
       <div
         className={`
           flex
-          h-12
-          w-12
+          h-11
+          w-11
           shrink-0
           items-center
           justify-center
           rounded-full
+          sm:h-12
+          sm:w-12
           ${
             completed
               ? "bg-[#E7F5EE] text-[#238653]"
@@ -944,18 +889,22 @@ function ProgressItem({
         `}
       >
         {completed ? (
-          <CheckCircle2 size={24} />
+          <CheckCircle2 size={22} />
         ) : current ? (
-          <Clock3 size={24} />
+          <Clock3 size={22} />
         ) : (
           <div className="h-3 w-3 rounded-full bg-current" />
         )}
       </div>
 
       <div>
-        <h3 className="font-bold text-[#194B4F]">{title}</h3>
+        <h3 className="text-sm font-bold text-[#194B4F] sm:text-base">
+          {title}
+        </h3>
 
-        <p className="mt-1 text-sm text-[#71858A]">{description}</p>
+        <p className="mt-1 text-xs leading-5 text-[#71858A] sm:text-sm">
+          {description}
+        </p>
       </div>
     </div>
   );
@@ -976,33 +925,28 @@ function PageHeading({
 }) {
   return (
     <div>
-      <p
-        className="
-          mb-[18px]
-          text-[14px]
-          font-extrabold
-          uppercase
-          tracking-[2px]
-          text-[#148B8B]
-        "
-      >
+      <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[2px] text-[#148B8B] sm:mb-[18px] sm:text-[14px]">
         {eyebrow}
       </p>
 
       <h1
         className="
           font-serif
-          text-[clamp(42px,5vw,62px)]
+          text-[38px]
           font-bold
           leading-[1.05]
-          tracking-[-2px]
+          tracking-[-1.5px]
           text-[#194B4F]
+          sm:text-[clamp(42px,5vw,62px)]
+          sm:tracking-[-2px]
         "
       >
         {title}
       </h1>
 
-      <p className="mt-[18px] text-[20px] text-[#668087]">{description}</p>
+      <p className="mt-3 max-w-[700px] text-[17px] leading-7 text-[#668087] sm:mt-[18px] sm:text-[20px]">
+        {description}
+      </p>
     </div>
   );
 }
@@ -1025,27 +969,34 @@ function WhatsAppButton({ applicantId }: { applicantId: string }) {
       rel="noopener noreferrer"
       className="
         fixed
-        bottom-[30px]
-        right-[34px]
+        bottom-4
+        right-4
         z-50
         flex
-        min-h-[66px]
+        min-h-[54px]
         items-center
-        gap-[11px]
+        gap-2
         rounded-full
         bg-[#25D366]
-        px-[26px]
-        text-[17px]
+        px-4
+        text-sm
         font-extrabold
         text-white
         shadow-[0_12px_30px_rgba(37,211,102,0.25)]
         transition
         hover:-translate-y-1
+        sm:bottom-[30px]
+        sm:right-[34px]
+        sm:min-h-[66px]
+        sm:gap-[11px]
+        sm:px-[26px]
+        sm:text-[17px]
       "
     >
-      <MessageCircle size={28} strokeWidth={2.2} />
+      <MessageCircle size={23} strokeWidth={2.2} />
 
-      <span>Chat on WhatsApp</span>
+      <span className="hidden sm:inline">Chat on WhatsApp</span>
+      <span className="sm:hidden">WhatsApp</span>
     </a>
   );
 }
