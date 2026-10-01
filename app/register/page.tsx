@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { createClient } from "../../lib/supabase/client";
 
 import {
   ArrowLeft,
@@ -105,6 +106,8 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [countryOfBirth, setCountryOfBirth] = useState("");
   const [countryLivingIn, setCountryLivingIn] = useState("");
 
@@ -121,50 +124,84 @@ export default function RegisterPage() {
     setSubmitError("");
 
     try {
-      // const application = {
-      //   jobType: selectedJobType,
-      //   jobRole,
-      //   country,
-      //   passportStatus,
-      //   feeAcknowledged,
+      const normalizedEmail = email.trim().toLowerCase();
 
-      //   firstName,
-      //   lastName,
-      //   phone,
-      //   whatsapp,
-      //   email,
-      //   countryOfBirth,
-      //   countryLivingIn,
-      // };
+      if (password.length < 8) {
+        throw new Error("Password must be at least 8 characters long.");
+      }
 
-      // const response = await fetch("/api/applications", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(application),
-      // });
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
 
-      // const result = await response.json();
+      const supabase = createClient();
 
-      // if (!response.ok) {
-      //   throw new Error(
-      //     result?.message || "Unable to submit your application.",
-      //   );
-      // }
+      // 1. Create the applicant's login account.
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+          },
+        },
+      });
 
-      /*
-       * Database submission succeeded.
-       * Now redirect to WhatsApp.
-       */
+      if (authError) {
+        throw new Error(authError.message);
+      }
 
-      const whatsappNumber = "254713839182"; // YOUR BUSINESS WHATSAPP NUMBER
+      if (!authData.user) {
+        throw new Error("Unable to create your account.");
+      }
+
+      // The application API verifies this authenticated user before inserting.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error(
+          "Your account was created, but no active session was returned. Please disable email confirmation in Supabase Auth or complete email verification before submitting the application.",
+        );
+      }
+
+      // 2. Save the application against the authenticated user.
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          job_type: selectedJobType,
+          job_role: jobRole.trim(),
+          country,
+          passport_status: passportStatus,
+          fee_acknowledged: feeAcknowledged,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          phone: phone.trim(),
+          whatsapp: whatsapp.trim(),
+          email: normalizedEmail,
+          country_of_birth: countryOfBirth,
+          country_living_in: countryLivingIn || null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result?.error || "Unable to save your application.");
+      }
+
+      // 3. Save succeeded — now redirect the applicant to WhatsApp.
+      const whatsappNumber = "254713839182";
 
       const message = `
 Hello Steve Safari,
 
 I have completed my job application.
-
 
 Name: ${firstName} ${lastName}
 Job: ${jobRole}
@@ -173,11 +210,13 @@ Country: ${country}
 Passport Status: ${passportStatus}
 Phone: ${phone}
 WhatsApp: ${whatsapp}
-Email: ${email}
+Email: ${normalizedEmail}
 Country of Birth: ${countryOfBirth}
 Country Living In: ${countryLivingIn || "Not specified"}
 
 I have read and acknowledged the service fee notice.
+
+Application ID: ${result.application?.id || "N/A"}
 
 Thank you.
 `.trim();
@@ -207,7 +246,7 @@ Thank you.
           ? error.message
           : "Something went wrong while submitting your application.",
       );
-    } finally {
+
       setIsSubmitting(false);
     }
   };
@@ -309,6 +348,9 @@ Thank you.
                   !!phone.trim() &&
                   !!whatsapp.trim() &&
                   !!email.trim() &&
+                  password.length >= 8 &&
+                  confirmPassword.length >= 8 &&
+                  password === confirmPassword &&
                   !!countryOfBirth
                 : true;
 
@@ -1364,6 +1406,85 @@ Thank you.
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     autoComplete="email"
+                    className="
+            h-[61px]
+            w-full
+            rounded-lg
+            border border-[#ded8d5]
+            bg-white
+            px-5
+            text-[16px]
+            text-[#222]
+            outline-none
+            transition
+            placeholder:text-[#888]
+            focus:border-[#ca392d]
+            focus:ring-4
+            focus:ring-[#ca392d]/10
+          "
+                  />
+                </div>
+
+                {/* Password */}
+
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    Password <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    autoComplete="new-password"
+                    minLength={8}
+                    className="
+            h-[61px]
+            w-full
+            rounded-lg
+            border border-[#ded8d5]
+            bg-white
+            px-5
+            text-[16px]
+            text-[#222]
+            outline-none
+            transition
+            placeholder:text-[#888]
+            focus:border-[#ca392d]
+            focus:ring-4
+            focus:ring-[#ca392d]/10
+          "
+                  />
+
+                  <p className="mt-2 text-xs text-[#999]">
+                    Use at least 8 characters. This password will be used to log
+                    in.
+                  </p>
+                </div>
+
+                {/* Confirm Password */}
+
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="mb-2 block text-sm font-bold text-[#252525]"
+                  >
+                    Confirm Password <span className="text-[#ca392d]">*</span>
+                  </label>
+
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Enter your password again"
+                    autoComplete="new-password"
+                    minLength={8}
                     className="
             h-[61px]
             w-full

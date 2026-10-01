@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
   Home,
@@ -16,11 +16,21 @@ import {
   FileText,
   Wifi,
   Smartphone,
+  LogOut,
 } from "lucide-react";
 import PaymentOptionCard from "./PaymentOptionCard";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type Tab = "home" | "progress" | "files" | "payment" | "refer" | "updates";
+
+type Applicant = {
+  name: string;
+  id: string;
+  fee: string;
+  email: string;
+  status: string;
+};
 
 const tabs: {
   id: Tab;
@@ -61,11 +71,36 @@ const tabs: {
 
 function DashboardLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-pulse text-muted-foreground">
+    <div className="flex min-h-screen items-center justify-center bg-[#F8F6EF]">
+      <div className="text-sm font-semibold text-[#70848A]">
         Loading dashboard...
       </div>
     </div>
+  );
+}
+
+function DashboardError({ message }: { message: string }) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#F8F6EF] px-5">
+      <div className="w-full max-w-md rounded-2xl border border-[#DFE2DC] bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+          <span className="text-xl font-bold">!</span>
+        </div>
+
+        <h1 className="mt-5 font-serif text-3xl font-bold text-[#194B4F]">
+          Unable to load your dashboard
+        </h1>
+
+        <p className="mt-3 text-sm leading-6 text-[#71858A]">{message}</p>
+
+        <Link
+          href="/login"
+          className="mt-6 inline-flex min-h-[50px] items-center justify-center rounded-xl bg-[#194B4F] px-6 text-sm font-bold text-white transition hover:bg-[#153E41]"
+        >
+          Go to Login
+        </Link>
+      </div>
+    </main>
   );
 }
 
@@ -78,7 +113,13 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+
+  const [applicant, setApplicant] = useState<Applicant | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const requestedTab = searchParams.get("tab");
 
@@ -86,25 +127,139 @@ function DashboardContent() {
     ? (requestedTab as Tab)
     : "home";
 
-  const applicant = {
-    name: "Forex Pro",
-    id: "SS-01437",
-    fee: "30,000",
+  useEffect(() => {
+    let mounted = true;
+
+    const loadApplicant = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError("");
+
+        const supabase = createClient();
+
+        /*
+         * Get the currently logged-in user.
+         */
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          router.replace("/login");
+          return;
+        }
+
+        /*
+         * Get this user's application.
+         *
+         * RLS should ensure the user can only access
+         * their own application.
+         */
+        const { data: application, error: applicationError } = await supabase
+          .from("applications")
+          .select(
+            `
+                id,
+                first_name,
+                last_name,
+                email,
+                status
+              `,
+          )
+          .eq("user_id", user.id)
+          .order("created_at", {
+            ascending: false,
+          })
+          .limit(1)
+          .maybeSingle<{
+            id: string;
+            first_name: string;
+            last_name: string;
+            email: string;
+            status: string;
+          }>();
+
+        if (applicationError) {
+          throw new Error(applicationError.message);
+        }
+
+        if (!application) {
+          throw new Error(
+            "We could not find an application connected to this account.",
+          );
+        }
+
+        if (!mounted) return;
+
+        setApplicant({
+          name: `${application.first_name} ${application.last_name}`.trim(),
+          id: application.id,
+          email: application.email,
+          status: application.status,
+          fee: "30,000",
+        });
+      } catch (error) {
+        if (!mounted) return;
+
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while loading your application.",
+        );
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadApplicant();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+
+    try {
+      const supabase = createClient();
+
+      await supabase.auth.signOut();
+
+      router.replace("/login");
+      router.refresh();
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
+
+  if (isLoading) {
+    return <DashboardLoading />;
+  }
+
+  if (loadError || !applicant) {
+    return (
+      <DashboardError
+        message={loadError || "We could not find your application."}
+      />
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#F8F6EF] text-[#183F43]">
       {/* =====================================================
           HEADER
       ====================================================== */}
-
       <header className="pt-7">
         <div className="mx-auto w-[calc(100%-80px)] max-w-[1450px]">
           {/* Top header */}
-
           <div className="flex min-h-[72px] items-center justify-between">
             {/* Logo */}
-
             <Link
               href="/dashboard?tab=home"
               className="font-serif text-[28px] font-bold tracking-[-1px]"
@@ -113,7 +268,6 @@ function DashboardContent() {
             </Link>
 
             {/* Applicant */}
-
             <div className="flex items-center gap-4">
               <button
                 type="button"
@@ -139,21 +293,44 @@ function DashboardContent() {
                 </span>
 
                 <span className="text-[13px] text-[#70848A]">
-                  {applicant.id}
+                  Application:{" "}
+                  {applicant.id.toString().slice(0, 8).toUpperCase()}
                 </span>
               </div>
+
+              {/* Logout */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                aria-label="Sign out"
+                className="
+                  ml-2
+                  flex h-[46px] w-[46px]
+                  items-center justify-center
+                  rounded-full
+                  border border-[#DBE3DF]
+                  bg-white
+                  text-[#71858A]
+                  transition
+                  hover:border-red-200
+                  hover:bg-red-50
+                  hover:text-[#cf392d]
+                  disabled:opacity-50
+                "
+              >
+                <LogOut size={19} />
+              </button>
             </div>
           </div>
 
           {/* =================================================
               NAVIGATION
           ================================================== */}
-
           <nav className="mt-6 border-b border-[#DFE2DC] pb-[18px]">
             <div className="flex items-center gap-2 overflow-x-auto">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
-
                 const isActive = activeTab === tab.id;
 
                 return (
@@ -171,7 +348,6 @@ function DashboardContent() {
                       text-[16px]
                       font-semibold
                       transition
-
                       ${
                         isActive
                           ? "bg-[#194B4F] text-white"
@@ -180,7 +356,6 @@ function DashboardContent() {
                     `}
                   >
                     <Icon size={22} strokeWidth={1.8} />
-
                     {tab.label}
                   </Link>
                 );
@@ -193,7 +368,6 @@ function DashboardContent() {
       {/* =====================================================
           CONTENT
       ====================================================== */}
-
       <section className="mx-auto w-[calc(100%-80px)] max-w-[1450px] pb-28 pt-11">
         {activeTab === "home" && <HomeContent applicant={applicant} />}
 
@@ -203,7 +377,7 @@ function DashboardContent() {
 
         {activeTab === "payment" && <PaymentContent fee={applicant.fee} />}
 
-        {activeTab === "refer" && <ReferContent />}
+        {activeTab === "refer" && <ReferContent applicantId={applicant.id} />}
 
         {activeTab === "updates" && <UpdatesContent />}
       </section>
@@ -211,7 +385,6 @@ function DashboardContent() {
       {/* =====================================================
           WHATSAPP BUTTON
       ====================================================== */}
-
       <WhatsAppButton applicantId={applicant.id} />
     </main>
   );
@@ -221,19 +394,10 @@ function DashboardContent() {
    HOME
 ========================================================= */
 
-function HomeContent({
-  applicant,
-}: {
-  applicant: {
-    name: string;
-    id: string;
-    fee: string;
-  };
-}) {
+function HomeContent({ applicant }: { applicant: Applicant }) {
   return (
     <div>
       {/* Intro */}
-
       <div>
         <p
           className="
@@ -275,7 +439,6 @@ function HomeContent({
       </div>
 
       {/* Next step */}
-
       <div
         className="
           relative
@@ -326,13 +489,7 @@ function HomeContent({
             Payment unlocks the next phase of your application.
           </p>
 
-          <div
-            className="
-              mt-8
-              text-[31px]
-              font-extrabold
-            "
-          >
+          <div className="mt-8 text-[31px] font-extrabold">
             KES {applicant.fee}
           </div>
 
@@ -362,7 +519,6 @@ function HomeContent({
         </div>
 
         {/* Decorative shape */}
-
         <div
           className="
             absolute
@@ -482,13 +638,11 @@ function FilesContent() {
 /* =========================================================
    PAYMENT
 ========================================================= */
+
 function PaymentContent({ fee }: { fee: string }) {
   return (
     <div className="mx-auto max-w-[830px] space-y-5 px-5 py-8">
-      {/* =====================================================
-          SAFARICOM
-      ====================================================== */}
-
+      {/* SAFARICOM */}
       <PaymentOptionCard
         name="Safaricom M-Pesa"
         description="Recommended"
@@ -547,10 +701,7 @@ function PaymentContent({ fee }: { fee: string }) {
         }}
       />
 
-      {/* =====================================================
-          AIRTEL
-      ====================================================== */}
-
+      {/* AIRTEL */}
       <PaymentOptionCard
         name="Airtel Money Kenya"
         description="Interoperable"
@@ -621,7 +772,17 @@ function PaymentContent({ fee }: { fee: string }) {
    REFER
 ========================================================= */
 
-function ReferContent() {
+function ReferContent({ applicantId }: { applicantId: string }) {
+  const referralLink = `stevesafari.org/register?ref=${applicantId}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(`https://${referralLink}`);
+    } catch {
+      // Clipboard may be unavailable in some browsers.
+    }
+  };
+
   return (
     <div>
       <PageHeading
@@ -655,11 +816,12 @@ function ReferContent() {
             text-[#71858A]
           "
         >
-          stevesafari.org/register?ref=SS-01437
+          {referralLink}
         </div>
 
         <button
           type="button"
+          onClick={handleCopy}
           className="
             mt-4
             rounded-xl
@@ -668,6 +830,8 @@ function ReferContent() {
             py-3
             font-bold
             text-white
+            transition
+            hover:bg-[#153E41]
           "
         >
           Copy referral link
@@ -770,7 +934,6 @@ function ProgressItem({
           items-center
           justify-center
           rounded-full
-
           ${
             completed
               ? "bg-[#E7F5EE] text-[#238653]"
@@ -849,7 +1012,7 @@ function PageHeading({
 ========================================================= */
 
 function WhatsAppButton({ applicantId }: { applicantId: string }) {
-  const whatsappNumber = "254700000000";
+  const whatsappNumber = "254713839182";
 
   const message = encodeURIComponent(
     `Hello Steve Safari, I need assistance with my application. My applicant ID is ${applicantId}.`,

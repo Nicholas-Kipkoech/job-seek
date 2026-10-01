@@ -12,27 +12,69 @@ import {
   LogIn,
   UserCircle2,
   CheckCircle2,
-  ArrowRight,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log({
-      email,
-      password,
-      rememberMe,
-    });
-    router.push("/dashboard");
+    if (isLoading) return;
 
-    // Connect your authentication here
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (!normalizedEmail) {
+        throw new Error("Please enter your email address.");
+      }
+
+      if (!password) {
+        throw new Error("Please enter your password.");
+      }
+
+      const supabase = createClient();
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (signInError) {
+        if (signInError.message.toLowerCase().includes("invalid login")) {
+          throw new Error(
+            "Incorrect email or password. Please check your details and try again.",
+          );
+        }
+
+        throw new Error(signInError.message);
+      }
+
+      // Successful login
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to sign in. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -171,10 +213,15 @@ export default function LoginPage() {
 
                       <input
                         id="email"
+                        name="email"
                         type="email"
                         required
+                        autoComplete="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (error) setError("");
+                        }}
                         placeholder="you@example.com"
                         className="h-[61px] w-full rounded-lg border border-[#ddd8d5] bg-white pl-12 pr-4 text-[15px] text-[#222] outline-none transition placeholder:text-[#999] focus:border-[#cf392d] focus:ring-4 focus:ring-[#cf392d]/10"
                       />
@@ -198,10 +245,15 @@ export default function LoginPage() {
 
                       <input
                         id="password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
                         required
+                        autoComplete="current-password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (error) setError("");
+                        }}
                         placeholder="Enter your password"
                         className="h-[61px] w-full rounded-lg border border-[#ddd8d5] bg-white pl-12 pr-12 text-[15px] text-[#222] outline-none transition placeholder:text-[#999] focus:border-[#cf392d] focus:ring-4 focus:ring-[#cf392d]/10"
                       />
@@ -222,6 +274,16 @@ export default function LoginPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Error */}
+                  {error && (
+                    <div
+                      role="alert"
+                      className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium leading-6 text-red-700"
+                    >
+                      {error}
+                    </div>
+                  )}
 
                   {/* Remember / Forgot */}
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -261,10 +323,20 @@ export default function LoginPage() {
                   {/* Submit */}
                   <button
                     type="submit"
-                    className="flex h-[59px] w-full items-center justify-center gap-2 rounded-lg bg-[#cf392d] text-base font-bold text-white shadow-lg shadow-red-900/10 transition hover:bg-[#b92e24] active:scale-[.99]"
+                    disabled={isLoading}
+                    className="flex h-[59px] w-full items-center justify-center gap-2 rounded-lg bg-[#cf392d] text-base font-bold text-white shadow-lg shadow-red-900/10 transition hover:bg-[#b92e24] active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    <LogIn size={19} />
-                    Sign In
+                    {isLoading ? (
+                      <>
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Signing in...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={19} />
+                        Sign In
+                      </>
+                    )}
                   </button>
                 </form>
 
