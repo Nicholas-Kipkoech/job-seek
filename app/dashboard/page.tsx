@@ -664,12 +664,12 @@ function PaymentContent({ fee }: { fee: string }) {
         ]}
         recipient={{
           label: "Send to M-Pesa number",
-          number: "+254118906220",
-          accountName: "Stephen Safari Otieno",
+          number: "+254748811194",
+          accountName: "Simon Maina",
         }}
       />
 
-      <PaymentOptionCard
+      {/* <PaymentOptionCard
         name="Airtel Money Kenya"
         description="Interoperable"
         icon={<Wifi size={25} />}
@@ -730,7 +730,7 @@ function PaymentContent({ fee }: { fee: string }) {
           number: "+254118906220",
           accountName: "Stephen Safari Otieno",
         }}
-      />
+      /> */}
     </div>
   );
 }
