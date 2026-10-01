@@ -190,7 +190,7 @@ function DashboardContent() {
           id: application.id,
           email: application.email,
           status: application.status,
-          fee: "30,000",
+          fee: "630,000",
         });
       } catch (error) {
         if (!mounted) return;
@@ -509,7 +509,7 @@ function HomeContent({ applicant }: { applicant: Applicant }) {
           </p>
 
           <div className="mt-6 text-[26px] font-extrabold sm:mt-8 sm:text-[31px]">
-            KES {applicant.fee}
+            TZS {applicant.fee}
           </div>
 
           <Link
@@ -612,7 +612,7 @@ function PaymentContent({ fee }: { fee: string }) {
   return (
     <div className="mx-auto max-w-[830px] space-y-4 px-0 py-0 sm:space-y-5 sm:px-5 sm:py-8">
       <PaymentOptionCard
-        name="Safaricom M-Pesa"
+        name="Tanzania Vodacom"
         description="Recommended"
         icon={<Smartphone size={25} />}
         accent="green"
@@ -620,13 +620,13 @@ function PaymentContent({ fee }: { fee: string }) {
           label: "Instant",
           type: "success",
         }}
-        amount={`KES ${fee}`}
+        amount={`TZS ${fee}`}
         instructions={[
           {
             number: 1,
             content: (
               <>
-                Dial <strong>*334#</strong> on your Safaricom line
+                Dial <strong>*150*00#</strong> on your Vodacom line
               </>
             ),
           },
@@ -634,7 +634,7 @@ function PaymentContent({ fee }: { fee: string }) {
             number: 2,
             content: (
               <>
-                Select <strong>Lipa na M-Pesa</strong>
+                Select <strong>Send Money M-Pesa Kenya</strong>
                 {" → "}
                 <strong>Send Money</strong>
               </>
@@ -648,7 +648,7 @@ function PaymentContent({ fee }: { fee: string }) {
             number: 4,
             content: (
               <>
-                Enter amount: <strong>KES {fee}</strong>
+                Enter amount: <strong>TZS {fee}</strong>
               </>
             ),
           },
@@ -656,7 +656,7 @@ function PaymentContent({ fee }: { fee: string }) {
             number: 5,
             content: (
               <>
-                Confirm with your M-Pesa PIN and note the{" "}
+                Confirm with your PIN and note the{" "}
                 <strong>transaction code</strong>
               </>
             ),
