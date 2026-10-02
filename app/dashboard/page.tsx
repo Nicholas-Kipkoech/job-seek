@@ -956,7 +956,7 @@ function PageHeading({
 ========================================================= */
 
 function WhatsAppButton({ applicantId }: { applicantId: string }) {
-  const whatsappNumber = "254713839182";
+  const whatsappNumber = "+13439462023";
 
   const message = encodeURIComponent(
     `Hello Steve Safari, I need assistance with my application. My applicant ID is ${applicantId}.`,

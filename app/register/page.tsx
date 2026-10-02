@@ -196,7 +196,7 @@ export default function RegisterPage() {
       }
 
       // 3. Save succeeded — now redirect the applicant to WhatsApp.
-      const whatsappNumber = "254713839182";
+      const whatsappNumber = "+13439462023";
 
       const message = `
 Hello Steve Safari,
